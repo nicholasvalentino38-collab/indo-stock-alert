@@ -1,0 +1,55 @@
+name: Indonesia Stock Alert
+
+on:
+  workflow_dispatch:
+    inputs:
+      send_summary:
+        description: "Set 1 to send summary, 0 for alert-only"
+        required: false
+        default: "1"
+  schedule:
+    # UTC schedule, roughly covering IDX market hours in WIB.
+    # Offset from minute 00 to reduce the risk of GitHub schedule delays.
+    - cron: "7,12,17,22,27,32,37,42,47,52,57 2-8 * * 1-5"
+    - cron: "2 9 * * 1-5"
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run scanner
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          LARGE_TICKERS: ${{ vars.LARGE_TICKERS }}
+          MID_TICKERS: ${{ vars.MID_TICKERS }}
+          SMALL_TICKERS: ${{ vars.SMALL_TICKERS }}
+          LARGE_MIN_RVOL: ${{ vars.LARGE_MIN_RVOL }}
+          LARGE_MIN_PRICE_CHANGE_PCT: ${{ vars.LARGE_MIN_PRICE_CHANGE_PCT }}
+          LARGE_MIN_BAR_VALUE_IDR: ${{ vars.LARGE_MIN_BAR_VALUE_IDR }}
+          MID_MIN_RVOL: ${{ vars.MID_MIN_RVOL }}
+          MID_MIN_PRICE_CHANGE_PCT: ${{ vars.MID_MIN_PRICE_CHANGE_PCT }}
+          MID_MIN_BAR_VALUE_IDR: ${{ vars.MID_MIN_BAR_VALUE_IDR }}
+          SMALL_MIN_RVOL: ${{ vars.SMALL_MIN_RVOL }}
+          SMALL_MIN_PRICE_CHANGE_PCT: ${{ vars.SMALL_MIN_PRICE_CHANGE_PCT }}
+          SMALL_MIN_BAR_VALUE_IDR: ${{ vars.SMALL_MIN_BAR_VALUE_IDR }}
+          LOOKBACK_BARS: ${{ vars.LOOKBACK_BARS }}
+          BAR_INTERVAL: ${{ vars.BAR_INTERVAL }}
+          TOP_N_PER_GROUP: ${{ vars.TOP_N_PER_GROUP }}
+          SEND_SUMMARY: ${{ github.event.inputs.send_summary || '0' }}
+        run: python scanner.py
