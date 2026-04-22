@@ -1,0 +1,41 @@
+name: Indonesia Stock Alert
+
+on:
+  workflow_dispatch:
+  schedule:
+    # UTC schedule, roughly covering IDX market hours in WIB.
+    # Offset from minute 00 to reduce the risk of GitHub schedule delays.
+    - cron: '7,12,17,22,27,32,37,42,47,52,57 2-8 * * 1-5'
+    - cron: '2 9 * * 1-5'
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run scanner
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TICKERS: ${{ vars.TICKERS }}
+          MIN_RVOL: ${{ vars.MIN_RVOL }}
+          MIN_PRICE_CHANGE_PCT: ${{ vars.MIN_PRICE_CHANGE_PCT }}
+          MIN_BAR_VALUE_IDR: ${{ vars.MIN_BAR_VALUE_IDR }}
+          LOOKBACK_BARS: ${{ vars.LOOKBACK_BARS }}
+          BAR_INTERVAL: ${{ vars.BAR_INTERVAL }}
+          SEND_SUMMARY: '1'
+        run: python scanner.py
