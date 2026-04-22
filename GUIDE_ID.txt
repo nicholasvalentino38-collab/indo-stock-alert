@@ -1,0 +1,26 @@
+VERSI 2 - STOCK ALERT DENGAN 3 KELOMPOK MARKET CAP
+
+1. Simpan scanner.py baru.
+2. Simpan workflow baru di .github/workflows/stock-alert.yml.
+3. Hapus variable lama: TICKERS, MIN_RVOL, MIN_PRICE_CHANGE_PCT, MIN_BAR_VALUE_IDR.
+4. Buat variable baru:
+   - LARGE_TICKERS
+   - MID_TICKERS
+   - SMALL_TICKERS
+   - LARGE_MIN_RVOL
+   - LARGE_MIN_PRICE_CHANGE_PCT
+   - LARGE_MIN_BAR_VALUE_IDR
+   - MID_MIN_RVOL
+   - MID_MIN_PRICE_CHANGE_PCT
+   - MID_MIN_BAR_VALUE_IDR
+   - SMALL_MIN_RVOL
+   - SMALL_MIN_PRICE_CHANGE_PCT
+   - SMALL_MIN_BAR_VALUE_IDR
+   - LOOKBACK_BARS
+   - BAR_INTERVAL
+   - TOP_N_PER_GROUP
+
+CATATAN:
+- Scheduled run: summary mati, hanya kirim alert jika ada.
+- Manual run dari tab Actions: summary hidup.
+- Schedule saat ini tetap tiap 5 menit saat jam bursa, plus 1 scan setelah close.
