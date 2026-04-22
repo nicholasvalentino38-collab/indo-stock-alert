@@ -9,8 +9,10 @@ on:
         default: "1"
   schedule:
     # UTC schedule, roughly covering IDX market hours in WIB.
-    # Offset from minute 00 to reduce the risk of GitHub schedule delays.
+    # WIB = UTC+7
+    # 09:07-15:57 WIB on weekdays, every 5 minutes
     - cron: "7,12,17,22,27,32,37,42,47,52,57 2-8 * * 1-5"
+    # Extra post-close scan at 16:02 WIB
     - cron: "2 9 * * 1-5"
 
 jobs:
@@ -32,24 +34,45 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Debug variables
+        run: |
+          echo "=== checking GitHub variables ==="
+          echo "LARGE_TICKERS=${{ vars.LARGE_TICKERS }}"
+          echo "MID_TICKERS=${{ vars.MID_TICKERS }}"
+          echo "SMALL_TICKERS=${{ vars.SMALL_TICKERS }}"
+          echo "LOOKBACK_BARS=${{ vars.LOOKBACK_BARS }}"
+          echo "BAR_INTERVAL=${{ vars.BAR_INTERVAL }}"
+          echo "TOP_N_PER_GROUP=${{ vars.TOP_N_PER_GROUP }}"
+
+      - name: Debug scanner head
+        run: |
+          echo "=== scanner.py first 120 lines ==="
+          sed -n '1,120p' scanner.py
+
       - name: Run scanner
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
           LARGE_TICKERS: ${{ vars.LARGE_TICKERS }}
           MID_TICKERS: ${{ vars.MID_TICKERS }}
           SMALL_TICKERS: ${{ vars.SMALL_TICKERS }}
+
           LARGE_MIN_RVOL: ${{ vars.LARGE_MIN_RVOL }}
           LARGE_MIN_PRICE_CHANGE_PCT: ${{ vars.LARGE_MIN_PRICE_CHANGE_PCT }}
           LARGE_MIN_BAR_VALUE_IDR: ${{ vars.LARGE_MIN_BAR_VALUE_IDR }}
+
           MID_MIN_RVOL: ${{ vars.MID_MIN_RVOL }}
           MID_MIN_PRICE_CHANGE_PCT: ${{ vars.MID_MIN_PRICE_CHANGE_PCT }}
           MID_MIN_BAR_VALUE_IDR: ${{ vars.MID_MIN_BAR_VALUE_IDR }}
+
           SMALL_MIN_RVOL: ${{ vars.SMALL_MIN_RVOL }}
           SMALL_MIN_PRICE_CHANGE_PCT: ${{ vars.SMALL_MIN_PRICE_CHANGE_PCT }}
           SMALL_MIN_BAR_VALUE_IDR: ${{ vars.SMALL_MIN_BAR_VALUE_IDR }}
+
           LOOKBACK_BARS: ${{ vars.LOOKBACK_BARS }}
           BAR_INTERVAL: ${{ vars.BAR_INTERVAL }}
           TOP_N_PER_GROUP: ${{ vars.TOP_N_PER_GROUP }}
+
           SEND_SUMMARY: ${{ github.event.inputs.send_summary || '0' }}
         run: python scanner.py
